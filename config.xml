@@ -1,4 +1,4 @@
-﻿<?xml version='1.0' encoding='utf-8'?>
+<?xml version='1.0' encoding='utf-8'?>
 <widget id="com.colegiodelosmolinos.molineteDocente" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:gap="http://phonegap.com/ns/1.0">
     <name>Familia Molinete</name>
     <description>
@@ -48,17 +48,30 @@
     <icon platform="ios" height="144" src="www/res/icon/ios/icon-72-2x.png" width="144" />
     <icon platform="webos" src="www/res/icon/webos/icon-64.png" />
     <icon platform="winphone" src="www/res/icon/windows-phone/icon-48.png" />
+    <platform name="android">
+    <splash qualifier="port-ldpi" src="www/res/screen/android/screen-ldpi-portrait.png" />
+    <splash qualifier="port-mdpi" src="www/res/screen/android/screen-mdpi-portrait.png" />
+    <splash qualifier="port-hdpi" src="www/res/screen/android/screen-hdpi-portrait.png" />
+    <splash qualifier="port-xhdpi" src="www/res/screen/android/screen-xhdpi-portrait.png" />
+    <splash qualifier="land-ldpi" src="www/res/screen/android/screen-ldpi-landscape.png" />
+    <splash qualifier="land-mdpi" src="www/res/screen/android/screen-mdpi-landscape.png" />
+    <splash qualifier="land-hdpi" src="www/res/screen/android/screen-hdpi-landscape.png" />
+    <splash qualifier="land-xhdpi" src="www/res/screen/android/screen-xhdpi-landscape.png" />
+    </platform>    
+    <platform name="ios">
+    <splash src="www/res/screen/ios/screen-iphone-portrait.png" width="320" height="480"/>
+    <splash src="rwww/res/screen/ios/screen-iphone-portrait-2x.png" width="640" height="960"/>
+    <splash src="www/res/screen/ios/screen-iphone-portrait-568h-2x.png" width="640" height="1136"/> 
+    <splash src="www/res/screen/ios/screen-ipad-portrait.png" width="768" height="1024"/>   
+    <splash src="www/res/screen/ios/screen-ipad-landscape.png" width="1024" height="768"/>    
+    <splash src="www/res/screen/ios/screen-ipad-portrait-2x.png" width="1536" height="2048"/>
+    <splash src="www/res/screen/ios/screen-iphone-portrait-568h-2x.png" width="750" height="1334"/>
+    <splash src="www/res/screen/ios/screen-ipad-landscape-2x.png" width="2048" height="1536"/>
+    <splash src="www/res/screen/ios/screen-ipad-portrait-2x.png" width="1242" height="2208"/>
+    <splash src="www/res/screen/ios/screen-ipad-landscape-2x.png" width="2208" height="1242"/>
+    </platform>    
     <icon platform="winphone" role="background" src="www/res/icon/windows-phone/icon-173-tile.png" />
-    <splash platform="android" qualifier="port-ldpi" src="www/res/screen/android/screen-ldpi-portrait.png" />
-    <splash platform="android" qualifier="port-mdpi" src="www/res/screen/android/screen-mdpi-portrait.png" />
-    <splash platform="android" qualifier="port-hdpi" src="www/res/screen/android/screen-hdpi-portrait.png" />
-    <splash platform="android" qualifier="port-xhdpi" src="www/res/screen/android/screen-xhdpi-portrait.png" />
     <splash platform="blackberry" src="www/res/screen/blackberry/screen-225.png" />
-    <splash platform="ios" height="480" src="www/res/screen/ios/screen-iphone-portrait.png" width="320" />
-    <splash platform="ios" height="960" src="www/res/screen/ios/screen-iphone-portrait-2x.png" width="640" />
-    <splash platform="ios" height="1136" src="www/res/screen/ios/screen-iphone-portrait-568h-2x.png" width="640" />
-    <splash platform="ios" height="1024" src="www/res/screen/ios/screen-ipad-portrait.png" width="768" />
-    <splash platform="ios" height="768" src="www/res/screen/ios/screen-ipad-landscape.png" width="1024" />
     <splash platform="winphone" src="www/res/screen/windows-phone/screen-portrait.jpg" />
     <access origin="*" />
     <plugin name="cordova-plugin-whitelist" version="1" />

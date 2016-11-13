@@ -1,17 +1,4 @@
-var server = ""; //http://niconoip.hopto.org:8081
-var alumnoId = "";
-var store;
-var deviceType;
-var familiar;
-var encuesta;
-var itemActualEncuesta = 0;
-var respuestaEncuesta;
-var cargueVideos = false;
-var cargueImagenes = false;
-var cargueComunicados = false;
-var videoData = {};
-var comunicados = [];
-var comunicadosMostrados = 0;
+
 var app = {
     // Application Constructor
     initialize: function() {
@@ -34,35 +21,7 @@ var app = {
     },
     // Update DOM on a Received Event
     receivedEvent: function(id) { 
-        deviceType = (navigator.userAgent.match(/iPad/i))  == "iPad" ? "iPad" : (navigator.userAgent.match(/iPhone/i))  == "iPhone" ? "iPhone" : (navigator.userAgent.match(/Android/i)) == "Android" ? "Android" : (navigator.userAgent.match(/BlackBerry/i)) ==  "BlackBerry" ? "BlackBerry" : "null";
-        if (deviceType == "iPhone"){
-            store = cordova.file.documentsDirectory;
-        }
-        else if (deviceType == "Android"){
-            store = cordova.file.externalDataDirectory;
-        }
-        server = host;
-        $.get( server+"/checkAuth/familiares/"+device.uuid, function( data ) {
-            console.log(data);
-            if (data == 'noautorizado'){
-                
-                $(':mobile-pagecontainer').pagecontainer('change', '#login', {
-                    transition: 'flip',
-                    changeHash: false,
-                    reverse: true,
-                    showLoadMsg: true
-                });
-            }
-            else{
-                $.getJSON( server+"/getFamiliar/"+device.uuid, function( data ) {
-                    familiar = data;
-                    loadAlumnosDeFamiliar(); 
-                });
-                
-            }
-        }).fail(function(jqXHR, textStatus, errorThrown) {
-            irAPaginaError();
-        });            
+           familiaApp.inicializar(); 
     },
     setupPush: function() {
         console.log('calling push init');
@@ -116,7 +75,195 @@ var app = {
     }      
 }; 
 
-function ingresar(){
+var familiaApp = ( function(){
+
+var server = ""; //http://niconoip.hopto.org:8081
+var alumnoId = "";
+var store;
+var deviceType;
+var familiar;
+var encuesta;
+var itemActualEncuesta = 0;
+var respuestaEncuesta;
+var cargueVideos = false;
+var cargueImagenes = false;
+var videoData = {};
+var comunicados = [];
+
+
+var checkAndLoadFile = function(ruta, clave){
+    //Si ya existe el archivo lo muestra para reproducir.
+    var v = "";
+    if (deviceType == "iPhone"){
+        v += "<video width=\"100%\" height=\"auto\" autoplay controls='controls'>";
+    }    
+    else if (deviceType == "Android"){
+                var ext = ruta.split('.').pop();
+                if (ext == 'MOV'){
+                    v += "<video width=\"100%\" class='video-js' height=\"auto\" autoplay controls preload='auto' data-setup=\"{}\">";
+                }
+                else{
+                    v += "<video width=\"100%\" height=\"auto\" autoplay controls='controls'>";
+                }
+    }
+        v += "<source id='videoup' src='" + ruta + "' type='video/mp4'>";
+        v += "<source id='videoup' src='" + ruta + "' type='video/webm'>";
+        v += "</video><p>Título: "+videoData[clave].nombre+"</p>";
+        v += "<p>Descripción: "+videoData[clave].descripcion+"</p>";
+    $("#verVideo").html(v);
+    $("video").focus();
+};
+
+var downloadFileAndLoad = function(nombreArchivo, clave){
+    //Si no existe el archivo, primero lo descargo del servidor.
+    console.log("No existe el archivo");
+    var fileTransfer = new FileTransfer();
+    var uri = encodeURI(server+"/"+nombreArchivo);
+    var fileURL = store + nombreArchivo;
+    fileTransfer.download(
+        uri,
+        fileURL,
+        function(entry) {
+            var v = "";
+            if (deviceType == "iPhone"){
+                v += "<video width=\"100%\" height=\"auto\" autoplay controls='controls'>";
+            }  
+            else if (deviceType == "Android"){
+                var ext = ruta.split('.').pop();
+                if (ext == 'MOV'){
+                    v += "<video width=\"100%\" class='video-js' height=\"auto\" autoplay controls preload='auto' data-setup=\"{}\">";
+                }
+                else{
+                    v += "<video width=\"100%\" height=\"auto\" autoplay controls='controls'>";
+                }
+            }            
+            v += "<source id='videoup' src='" + fileURL + "' type='video/mp4'>";
+            v += "<source id='videoup' src='" + fileURL + "' type='video/webm'>";
+            v += "</video><p>Título: "+videoData[clave].nombre+"</p>";
+            v += "<p>Descripción: "+videoData[clave].descripcion+"</p>";
+            $("#verVideo").html(v);
+            $("video").focus();
+
+        },
+        function(error) {
+            console.log("download error source " + error.source);
+            console.log("download error target " + error.target);
+            console.log("upload error code" + error.code);
+        },
+        false,
+        {
+            headers: {
+
+            }
+        }
+    );
+    
+};
+
+var loadItemMultiple = function(it){
+    console.log(it);
+    $("#encuestaItemPanel").html("");
+    var htmlInterior = "<fieldset id='fieldsetItemMultiple' data-role='controlgroup'>";
+    htmlInterior += "<legend>"+it.titulo+"</legend>";
+    console.log(it.items);
+    $.each(it.items, function( key, val ) {
+       htmlInterior += "<label for='"+key+"'>"+val.etiqueta+"</label>"; 
+       htmlInterior += "<input class='itcheckbox' type='checkbox' id='"+key+"' value='"+val.valor+"'/>";
+    });
+    htmlInterior +="</fieldset><hr />";
+    htmlInterior += '<a id="btItemMultiple" data-role="button mini" onclick="familiaApp.checkItemMultiple()">Siguiente</a>';
+    $("#encuestaItemPanel").append(htmlInterior);
+    $("#btItemMultiple").button();
+
+    $('.itcheckbox').checkboxradio();
+};
+
+var loadItemCheckbox = function(it){
+    console.log(it);
+    $("#encuestaItemPanel").html("");
+    var htmlInterior = "<fieldset id='fieldsetItemMultiple' data-role='controlgroup'>";
+    htmlInterior += "<legend>"+it.titulo+"</legend>";
+    console.log(it.items);
+    $.each(it.items, function( key, val ) {
+       if (key == 0){
+         htmlInterior += "<input type='radio' name='radiochoice' id='"+key+"' value='"+val.valor+"' checked='checked'/>";
+       } 
+       else{
+        htmlInterior += "<input type='radio' name='radiochoice' id='"+key+"' value='"+val.valor+"'/>";
+       }
+       htmlInterior += "<label for='"+key+"'>"+val.etiqueta+"</label>"; 
+    });//'<fieldset data-role="controlgroup"><legend>Checkbox 1</legend><input type="radio" name="radio" id="rid0" value="opck1" checked="checked"/><label for="rid0">Opción check 1</label><input type="radio" name="radio1" id="rid1" value="opck2"/><label for="rid1">Opción check 2</label></fieldset>'
+    htmlInterior +="</fieldset><hr />";
+    htmlInterior += '<a id="btItemMultiple" data-role="button mini" onclick="familiaApp.checkItemCheckbox()">Siguiente</a>';
+    $("#encuestaItemPanel").append(htmlInterior);
+    $("#btItemMultiple").button();
+    $('[type="radio"]').checkboxradio();
+};
+
+var loadItemTextual = function(it){
+    $("#encuestaItemPanel").html("");
+    var htmlInterior = "<label for='itemTextual'>"+it.titulo+"</label>";
+    htmlInterior += "<textarea id='itemTextual'></textarea>";
+    htmlInterior += '<a id="btItemTextual" data-role="button mini" onclick="familiaApp.checkItemTextual()">Siguiente</a>';
+    $("#encuestaItemPanel").append(htmlInterior);
+    $("#btItemTextual").button();
+    $('#itemTextual').textinput();
+}
+
+var convertirFecha = function (fechaDelServidor){
+    //Convierte un string con fecha UTC en un string del formato dd/mm/yyyy, 
+    //teniendo en cuenta la zona horaria
+
+    var d = new Date(fechaDelServidor);
+    var anio = d.getFullYear();
+    var mes = d.getMonth() + 1;  //los meses comienzan en cero
+    var dia = d.getDate();
+
+    if(dia < 10){
+        dia = "0" + dia;
+    }
+    if(mes < 10){
+        mes = "0" + mes;
+    }
+
+    return dia + "/" + mes + "/" + anio;
+}
+
+
+//API FAMILIA MOLINETE
+return {
+inicializar :function(){
+    deviceType = (navigator.userAgent.match(/iPad/i))  == "iPad" ? "iPad" : (navigator.userAgent.match(/iPhone/i))  == "iPhone" ? "iPhone" : (navigator.userAgent.match(/Android/i)) == "Android" ? "Android" : (navigator.userAgent.match(/BlackBerry/i)) ==  "BlackBerry" ? "BlackBerry" : "null";
+    if (deviceType == "iPhone"){
+        store = cordova.file.documentsDirectory;
+    }
+    else if (deviceType == "Android"){
+        store = cordova.file.externalDataDirectory;
+    }
+    server = host;
+    $.get( server+"/checkAuth/familiares/"+device.uuid, function( data ) {
+        console.log(data);
+        if (data == 'noautorizado'){
+            
+            $(':mobile-pagecontainer').pagecontainer('change', '#login', {
+                transition: 'flip',
+                changeHash: false,
+                reverse: true,
+                showLoadMsg: true
+            });
+        }
+        else{
+            $.getJSON( server+"/getFamiliar/"+device.uuid, function( data ) {
+                familiar = data;
+                familiaApp.loadAlumnosDeFamiliar(); 
+            });
+            
+        }
+    }).fail(function(jqXHR, textStatus, errorThrown) {
+        familiaApp.irAPaginaError();
+    });
+}, 
+ingresar :function(){
     var error = false;
     var ci = $("#cifamiliar").val();
     var codigo = $("#code").val();
@@ -140,16 +287,25 @@ function ingresar(){
                 });
                 $.getJSON( server+"/getFamiliar/"+device.uuid, function( data1 ) {
                     familiar = data1;
-                    loadAlumnosDeFamiliar(); 
+                    familiaApp.loadAlumnosDeFamiliar(); 
                 });
             } 
         }).fail(function(jqXHR, textStatus, errorThrown) {
-            irAPaginaError();
-        }); 
-     } 
-} 
 
-function loadAlumnos(){
+            if(jqXHR.status == 500) {
+                $(':mobile-pagecontainer').pagecontainer('change', '#loginError', {
+                    transition: 'flip',
+                    changeHash: false,
+                    reverse: true,
+                    showLoadMsg: true
+                });
+            } else {
+                familiaApp.irAPaginaError();
+            }
+        });
+     } 
+},
+loadAlumnos: function(){
     $.getJSON( server+"/verColeccion/alumnos", function( data ) {
         var alumnosListHTML = "";
         $.each( data, function( key, val ) {
@@ -160,11 +316,10 @@ function loadAlumnos(){
         $("#alumnosList").selectmenu("refresh");
 
     }).fail(function(jqXHR, textStatus, errorThrown) {
-        irAPaginaError();
+        familiaApp.irAPaginaError();
     });
-}
-
-function loadAlumnosDeFamiliar(){
+},
+loadAlumnosDeFamiliar: function(){
     console.log(familiar);
     $.getJSON( server+"/alumnosDeFamiliar/"+familiar._id, function( data ) {
         console.log(data);
@@ -177,30 +332,12 @@ function loadAlumnosDeFamiliar(){
         $("#alumnosList").selectmenu("refresh");
 
     }).fail(function(jqXHR, textStatus, errorThrown) {
-        irAPaginaError();
+        familiaApp.irAPaginaError();
     });
-}
-
-function empezar(){
-         
-    cargueVideos = false;
-    cargueImagenes = false;
-    cargueComunicados = false;
-    
-    $("#verVideo").empty();
-    $("#imagenGaleria").empty();
-    $("#comunicadosPagina").empty();
-    $('#imagenPanel').css("display", "none");
-    $('#comunicadosPanel').css("display", "none");  
-    $('#videosPanel').css("display", "none"); 
-   
-    alumnoId = $("#alumnosList").val();
-    $("#alumnoName").html($("#alumnosList").children('option:selected').html());
-    $( "#fichaDiariaPanel" ).html("");
-}
+},
 
 //////////////VIDEOS
-function loadVideosAlumno(){
+loadVideosAlumno: function(){
     $('#imagenPanel').css("display", "none");
     $('#comunicadosPanel').css("display", "none");
     $("#ulVideo").html("");
@@ -208,37 +345,33 @@ function loadVideosAlumno(){
     $.getJSON( server+"/contenidosDeAlumno/Video/"+alumnoId, function( data ) {
         videoData = data;
         var htmlInterior = "";
+        $("#videosTexto").empty();
+
         if(data.length == 0){
             htmlInterior += "<p>No hay videos para mostrar</p>";
-            $("#videosTexto").empty();
             $("#videosTexto").append(htmlInterior);
         } else {
+
             $.each( data, function( key, val ) {
-                var fechaAux = new Date(val.fecha.split("T")[0]);
-                var mes = parseInt(fechaAux.getMonth()) + 1;
-                var fechaString = fechaAux.getDate()+"/"+mes+"/"+fechaAux.getFullYear();
-                console.log(fechaAux);
-                //htmlInterior += "<li class='videolink' key='"+key+"' file='"+val.nombreArchivo+"''>"+val.nombre+"</li>";
-                htmlInterior += "<li class='videolink' key='"+key+"' file='"+val.nombreArchivo+"''>";
-                    htmlInterior += "<p>"+val.nombre+"</p>";
-                    htmlInterior += "<p>"+fechaString+"</p>";
-                    htmlInterior += "<p>"+val.descripcion+"</p>";
+                var fechaString = convertirFecha(val.fecha);
+                htmlInterior = "<li class='videolink ui-btn ui-shadow ui-corner-all' data-icon='bullets' key='"+key+"' file='"+val.nombreArchivo+"''>";
+                    htmlInterior += "<a style='color:white;'>"+val.nombre+" - "+fechaString+" ►</a>";
                 htmlInterior += "</li>";
                 $("#ulVideo").append(htmlInterior);
 
             });   
-            //Cargo los compartamientos de clases. 
-            //Compartamiento asociado a hacer click en un elmento de la lista de videos.
+            //Cargo los comportamientos de clases. 
+            //Comportamiento asociado a hacer click en un elmento de la lista de videos.
             $( ".videolink" ).on( "click", function() {
-                checkFileInMobile($( this ).attr("key"));
+                familiaApp.checkFileInMobile($( this ).attr("key"));
             });
         }
     }).fail(function(jqXHR, textStatus, errorThrown) {
-        irAPaginaError();
+        familiaApp.irAPaginaError();
     });
-}
+},
 
-function checkFileInMobile(clave){
+checkFileInMobile : function(clave){
     //Chequea si un archivo existe en el celular o no.
     var fileName = videoData[clave].nombreArchivo;
     window.resolveLocalFileSystemURL(store + fileName,                                
@@ -249,75 +382,10 @@ function checkFileInMobile(clave){
                 downloadFileAndLoad(fileName, clave);
             });
 
-}
-
-function checkAndLoadFile(ruta, clave){
-    //Si ya existe el archivo lo muestra para reproducir.
-    var v = "";
-    if (deviceType == "iPhone"){
-        v += "<video width=\"100%\" height=\"auto\" autoplay controls='controls'>";
-    }    
-    else if (deviceType == "Android"){
-                if (ruta.includes(".MOV")){
-                    v += "<video width=\"100%\" class='video-js' height=\"auto\" autoplay controls preload='auto' data-setup=\"{}\">";
-                }
-                else{
-                    v += "<video width=\"100%\" height=\"auto\" autoplay controls='controls'>";
-                }
-    }
-        v += "<source id='videoup' src='" + ruta + "' type='video/mp4'>";
-        v += "<source id='videoup' src='" + ruta + "' type='video/webm'>";
-        v += "</video><p>"+videoData[clave].descripcion+"</p>";
-    $("#verVideo").html(v);
-    $("video").focus();
-}
-
-function downloadFileAndLoad(nombreArchivo, clave){
-    //Si no existe el archivo, primero lo descargo del servidor.
-    console.log("No existe el archivo");
-    var fileTransfer = new FileTransfer();
-    var uri = encodeURI(server+"/"+nombreArchivo);
-    var fileURL = store + nombreArchivo;
-    fileTransfer.download(
-        uri,
-        fileURL,
-        function(entry) {
-            var v = "";
-            if (deviceType == "iPhone"){
-                v += "<video width=\"100%\" height=\"auto\" autoplay controls='controls'>";
-            }  
-            else if (deviceType == "Android"){
-                if (ruta.includes(".MOV")){
-                    v += "<video width=\"100%\" class='video-js' height=\"auto\" autoplay controls preload='auto' data-setup=\"{}\">";
-                }
-                else{
-                    v += "<video width=\"100%\" height=\"auto\" autoplay controls='controls'>";
-                }
-            }            
-                v += "<source id='videoup' src='" + fileURL + "' type='video/mp4'>";
-                v += "<source id='videoup' src='" + fileURL + "' type='video/webm'>";
-            v += "</video><p>"+videoData[clave].descripcion+"</p>";
-            $("#verVideo").html(v);
-            $("video").focus();
-
-        },
-        function(error) {
-            console.log("download error source " + error.source);
-            console.log("download error target " + error.target);
-            console.log("upload error code" + error.code);
-        },
-        false,
-        {
-            headers: {
-
-            }
-        }
-    );
-    
-}
+},
 
 ///////IMÁGENES
-function loadImagenesAlumno(){
+loadImagenesAlumno: function(){
     console.log(alumnoId);
     $('#videosPanel').css("display", "none");
     $('#comunicadosPanel').css("display", "none");
@@ -352,47 +420,56 @@ function loadImagenesAlumno(){
             }); 
         }           
     }).fail(function(jqXHR, textStatus, errorThrown) {
-        irAPaginaError();
+        familiaApp.irAPaginaError();
     });
-}
-
+},
+empezar: function(){
+       console.log("EMPEZAR");  
+    cargueVideos = false;
+    cargueImagenes = false;
+    
+    $("#verVideo").empty();
+    $("#imagenGaleria").empty();
+    $("#comunicadosPagina").empty();
+    $('#imagenPanel').css("display", "none");
+    $('#comunicadosPanel').css("display", "none");  
+    $('#videosPanel').css("display", "none"); 
+   
+    alumnoId = $("#alumnosList").val();
+    $("#alumnoName").html($("#alumnosList").children('option:selected').html());
+    $( "#fichaDiariaPanel" ).html("");
+},
 ///////COMUNICADOS
-function loadComunicadosAlumno(){
+loadComunicadosAlumno: function(){
     $('#videosPanel').css("display", "none");
     $('#imagenPanel').css("display", "none");    
-    if (cargueComunicados){
-        $('#comunicadosPanel').css("display", "block");
-    }
-    else{
-        $('#comunicadosPanel').css("display", "block");
-        $.getJSON( server+"/contenidosDeAlumno/Comunicado/"+alumnoId, function( data ) {
+    $('#comunicadosPanel').css("display", "block");
+    $.getJSON( server+"/contenidosDeAlumno/Comunicado/"+alumnoId, function( data ) {
+        var htmlInterior = "";
+        if(data.length == 0){
+            var htmlInterior = "";
+            htmlInterior += "<p>No hay comunicados para mostrar</p>";
+            $('#comunicadosPagina').empty(htmlInterior);
+            $('#comunicadosPagina').append(htmlInterior);
+        
+        } else {
+            comunicados = data;
+            familiaApp.mostrarMasComunicados(false); //Mostrar los 3 comunicados mas recientes.
+        }
 
-            if(data.length == 0){
-                var htmlInterior = "";
-                htmlInterior += "<p>No hay comunicados para mostrar</p>";
-                $('#comunicadosPagina').empty(htmlInterior);
-                $('#comunicadosPagina').append(htmlInterior);
-            } else {
-
-                comunicados = data
-                comunicadosMostrados = 0;
-                mostrarMasComunicados(false); //Mostrar los 3 comunicados mas recientes.
-            }
-
-        }).fail(function(jqXHR, textStatus, errorThrown) {
-            irAPaginaError();
-        });
-        cargueComunicados = true;
-    }
-}
-
-function mostrarMasComunicados(mostrarTodos) {
+    }).fail(function(jqXHR, textStatus, errorThrown) {
+        familiaApp.irAPaginaError();
+    });
+},
+mostrarMasComunicados: function(mostrarTodos) {
     var htmlInterior = "";
     var cantidad;
     var mensajeBoton;
+    var total;
 
+    total = Object.keys(comunicados).length;
     if(mostrarTodos) {
-        cantidad = Object.keys(comunicados).length;
+        cantidad = total;
         mensajeBoton = "Mostrar menos";
     } else {
         cantidad = 3;
@@ -400,28 +477,27 @@ function mostrarMasComunicados(mostrarTodos) {
     }
 
     for (var i = 0; i < cantidad; i++) {
-
-        console.log(comunicados[i].titulo);
-        var fechaAux = new Date(comunicados[i].fecha.split("T")[0]);
-        var mes = parseInt(fechaAux.getMonth()) + 1;
-        var fechaString = fechaAux.getDate()+"/"+mes+"/"+fechaAux.getFullYear();
-        console.log(fechaAux);
-        htmlInterior += "<hr /><p><b>"+ fechaString + " - " + comunicados[i].titulo+"</b></p>";
-        htmlInterior += "<p><i>"+comunicados[i].cuerpo+"</i></p>";
+        if(i < total) {
+            htmlInterior += "<hr /><p><b>" + convertirFecha(comunicados[i].fecha) + " - " + comunicados[i].titulo + "</b></p>";
+            htmlInterior += "<p><i>"+comunicados[i].cuerpo+"</i></p>";
+        } else {
+            i = cantidad; // Para que termine
+        }
     }
-    htmlInterior += '<hr /><a id="btMostrarMas" class="ui-btn ui-shadow ui-corner-all" data-role="button mini" onclick="mostrarMasComunicados('
-            + !mostrarTodos + ')">' + mensajeBoton + '</a>';
-    $('#comunicadosPagina').empty(htmlInterior);
-    $('#comunicadosPagina').append(htmlInterior);
-}
 
+    if(total > 3) { // Si hay 3 comunicados o menos, no es necesario el boton para mostrar mas.
+        htmlInterior += '<hr /><a id="btMostrarMas" class="ui-btn ui-shadow ui-corner-all" data-role="button mini" onclick="familiaApp.mostrarMasComunicados('
+            + !mostrarTodos + ')">' + mensajeBoton + '</a>';
+    }
+    $('#comunicadosPagina').empty();
+    $('#comunicadosPagina').append(htmlInterior);  
+},
 //////ASISTENCIARIO
-function fichaDiariaAlumno(){
+fichaDiariaAlumno: function(){
     $( "#fichaDiariaPanel" ).html("");
     $.getJSON( server+"/getAsistenciarioAlumno/"+alumnoId+"/"+$("#asistenciarioDate").val(), function( data ) {
         var htmlFichaDiaria = "";
         if(data) {
-             console.log(data.alumno);
              htmlFichaDiaria += "<p><b>"+data.alumno.nombres+" "+data.alumno.apellidos+"</b></p>";
              $( "#fichaDiariaPanel" ).append(htmlFichaDiaria);
              if (data.entrada != null){
@@ -505,21 +581,27 @@ function fichaDiariaAlumno(){
         }                                   
 
     }).fail(function(jqXHR, textStatus, errorThrown) {
-        irAPaginaError();
+        familiaApp.irAPaginaError();
     });
 
-}
-
+},
 //////ENCUESTAS
-function loadEncuestas(){
+loadEncuestas: function(){
     $("#encuestasPanel").html("");
-     $.getJSON( server+"/encuestasFamiliar/"+familiar._id, function( data ) {
-        var htmlInterior = "";
-        $.each( data, function( key, val ) {
-            htmlInterior = "<a href='#' class='encuestaLink' id='"+val._id+"' >"+val.nombre+"</a><br />";
-            $("#encuestasPanel").append(htmlInterior);
+    $.getJSON( server+"/encuestasFamiliar/"+familiar._id, function( data ) {
 
-        });
+        var htmlInterior = "";
+        $("#encuestasPanel").empty();
+
+        if(data.length > 0){
+            $.each( data, function( key, val ) {
+                htmlInterior += "<a href='#' class='encuestaLink' id='"+val._id+"' >"+val.nombre+"</a><br />";
+            });
+        } else {
+            htmlInterior = "<p>No hay nuevas encuestas.</p>";
+        }
+        $("#encuestasPanel").append(htmlInterior);
+        
         $(".encuestaLink").click(function(){
             $("#navBarButtons1").css("display", "block");
             $("#navBarButtons2").css("display", "none");
@@ -537,21 +619,15 @@ function loadEncuestas(){
                     showLoadMsg: true
                 });
             }).fail(function(jqXHR, textStatus, errorThrown) {
-                var errorHtml = "<p>"+jqXHR.responseText+"</p>";
-                errorHtml += "<p> Código de error: "+jqXHR.status+"</p>";
-                errorHtml += "<p> Llamada: Llamada a loadEncuestas() luego de crear</p>";
-                errorHtml += "<p>Pruebe reiniciar la aplicación luego.</p>";
-                $("#errorMsg").html(errorHtml);
-                console.log( "error "+jqXHR.responseText  );
+                familiaApp.irAPaginaError();
             });
         });
 
     }).fail(function(jqXHR, textStatus, errorThrown) {
-        irAPaginaError();
+        familiaApp.irAPaginaError();
     });
-}
-
-function loadItem(){
+},
+loadItem: function(){
     if (itemActualEncuesta < encuesta.itemsencuesta.length){
         var itemEncuesta = encuesta.itemsencuesta[itemActualEncuesta];
         itemActualEncuesta = itemActualEncuesta + 1;
@@ -582,27 +658,8 @@ function loadItem(){
         console.log(respuestaFinal);
         $.post(url,respuestaFinal,'json');
     }
-} 
-
-function loadItemMultiple(it){
-    console.log(it);
-    $("#encuestaItemPanel").html("");
-    var htmlInterior = "<fieldset id='fieldsetItemMultiple' data-role='controlgroup'>";
-    htmlInterior += "<legend>"+it.titulo+"</legend>";
-    console.log(it.items);
-    $.each(it.items, function( key, val ) {
-       htmlInterior += "<label for='"+key+"'>"+val.etiqueta+"</label>"; 
-       htmlInterior += "<input class='itcheckbox' type='checkbox' id='"+key+"' value='"+val.valor+"'/>";
-    });
-    htmlInterior +="</fieldset><hr />";
-    htmlInterior += '<a id="btItemMultiple" data-role="button mini" onclick="checkItemMultiple()">Siguiente</a>';
-    $("#encuestaItemPanel").append(htmlInterior);
-    $("#btItemMultiple").button();
-
-    $('.itcheckbox').checkboxradio();
-}
-
-function checkItemMultiple(){
+},
+checkItemMultiple : function(){
    console.log($("#fieldsetItemMultiple :checked").size());
     var respuestas = [];
     $("#fieldsetItemMultiple :checked").each(function() {
@@ -613,32 +670,9 @@ function checkItemMultiple(){
    // });
     console.log(respuestas);
     respuestaEncuesta.push(respuestas);
-    loadItem(); 
-}
-
-function loadItemCheckbox(it){
-    console.log(it);
-    $("#encuestaItemPanel").html("");
-    var htmlInterior = "<fieldset id='fieldsetItemMultiple' data-role='controlgroup'>";
-    htmlInterior += "<legend>"+it.titulo+"</legend>";
-    console.log(it.items);
-    $.each(it.items, function( key, val ) {
-       if (key == 0){
-         htmlInterior += "<input type='radio' name='radiochoice' id='"+key+"' value='"+val.valor+"' checked='checked'/>";
-       } 
-       else{
-        htmlInterior += "<input type='radio' name='radiochoice' id='"+key+"' value='"+val.valor+"'/>";
-       }
-       htmlInterior += "<label for='"+key+"'>"+val.etiqueta+"</label>"; 
-    });'<fieldset data-role="controlgroup"><legend>Checkbox 1</legend><input type="radio" name="radio" id="rid0" value="opck1" checked="checked"/><label for="rid0">Opción check 1</label><input type="radio" name="radio1" id="rid1" value="opck2"/><label for="rid1">Opción check 2</label></fieldset>'
-    htmlInterior +="</fieldset><hr />";
-    htmlInterior += '<a id="btItemMultiple" data-role="button mini" onclick="checkItemCheckbox()">Siguiente</a>';
-    $("#encuestaItemPanel").append(htmlInterior);
-    $("#btItemMultiple").button();
-    $('[type="radio"]').checkboxradio();
-}
-
-function checkItemCheckbox(){
+    familiaApp.loadItem(); 
+},
+checkItemCheckbox :function(){
    console.log($("#fieldsetItemMultiple :checked").size());
     var respuestas = [];
     $("#fieldsetItemMultiple :checked").each(function() {
@@ -646,42 +680,40 @@ function checkItemCheckbox(){
     });
     console.log(respuestas);
     respuestaEncuesta.push(respuestas);
-    loadItem();
-}
-
-function loadItemTextual(it){
-    $("#encuestaItemPanel").html("");
-    var htmlInterior = "<label for='itemTextual'>"+it.titulo+"</label>";
-    htmlInterior += "<textarea id='itemTextual'></textarea>";
-    htmlInterior += '<a id="btItemTextual" data-role="button mini" onclick="checkItemTextual()">Siguiente</a>';
-    $("#encuestaItemPanel").append(htmlInterior);
-    $("#btItemTextual").button();
-    $('#itemTextual').textinput();
-}
-
-function checkItemTextual(){
+    familiaApp.loadItem();
+},
+checkItemTextual : function(){
     var respuestas = []; 
     respuestas.push($("#itemTextual").val());
     console.log(respuestas);
     respuestaEncuesta.push(respuestas);
-    loadItem();
+    familiaApp.loadItem();
  
-}
-
-function limpiarEncuesta(){
+},
+limpiarEncuesta: function(){
     $("#encuestaItemPanel").html("");
     $("#encuestaPanel").html("");
-}
-
-function irAPaginaError(){
+},
+irAPaginaError: function(){
     $(':mobile-pagecontainer').pagecontainer('change', '#paginaError', {
         transition: 'flip',
         changeHash: false,
         reverse: true,
         showLoadMsg: true
     });
-}
-
-function salir() {
+},
+salir : function() {
     navigator.app.exitApp();
 }
+
+} //END API
+
+
+})();
+
+
+
+
+
+
+

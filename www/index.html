@@ -47,7 +47,7 @@
                 <select name="alumnosList" id="alumnosList" >
                 </select>
             </div>    
-            <p><a href="#principal" class="ui-btn ui-shadow ui-corner-all ui-icon-carat-r ui-btn-icon-right" onclick="empezar();">¡Empezar!</a></p>
+            <p><a href="#principal" class="ui-btn ui-shadow ui-corner-all ui-icon-carat-r ui-btn-icon-right" onclick="familiaApp.empezar();">¡Empezar!</a></p>
 
         </div><!-- /content -->
 
@@ -66,7 +66,7 @@
             <div data-role="navbar">
                 <ul>
                   <li><a href="#contenidosPage" data-icon="shop" class="ui-btn ui-shadow ui-corner-all" >Contenidos</a></li>
-                  <li><a href="#encuestasPage" data-icon="bullets" class="ui-btn ui-shadow ui-corner-all"  onclick="loadEncuestas();">Encuestas</a></li>
+                  <li><a href="#encuestasPage" data-icon="bullets" class="ui-btn ui-shadow ui-corner-all"  onclick="familiaApp.loadEncuestas();">Encuestas</a></li>
                   
                 </ul>
                 <ul>
@@ -77,8 +77,8 @@
             <p></p>
         </div><!-- /content -->
 
-
     </div><!-- /page PRINCIPAL -->   
+    
     
     <div data-role="page" id="login" >
 
@@ -92,15 +92,33 @@
          <p>Para poder ingresar deben solicitar el código en la Dirección.</p>
          <hr />
         <label for="cifamiliar" >Cédula de identidad:</label>
-        <input type="number" name="user" id="cifamiliar" placeholder="Username">
+        <input type="number" name="user" id="cifamiliar" placeholder="Cédula sin puntos ni guiones">
         <output type="text" id="cifamiliarerror" style="color:red"></output>
-        <label for="code" >Código</label>
-        <input type="number" name="code" id="code" placeholder="Código">
+        <label for="code" >Código:</label>
+        <input type="number" name="code" id="code" placeholder="Código de diez dígitos recibido por e-mail">
         <output type="text" id="codeerror" style="color:red"></output>
         <hr />
-        <input type="button" value="Enviar" onclick="ingresar()" />
+        <input type="button" value="Enviar" onclick="familiaApp.ingresar()" />
         </div>
     </div>    
+
+
+    <div data-role="page" id="loginError" >
+
+        <div data-role="header" class="ui-content" >
+            <img src="img/logo.png" style="margin:0px auto;display:block"/>
+        </div><!-- /header -->
+
+        <div role="main" class="ui-content">
+            <h3>Inicio de sesión fallido</h3>
+            <p>Las credenciales proporcionadas no son correctas.</p>
+            <p>Seleccione "Atrás" si desea volver a intentarlo.</p>
+            <hr />
+            <a href="#login" data-direction="reverse" class="ui-btn ui-shadow ui-corner-all">Atrás</a>
+            <input type="button" value="Salir" onclick="familiaApp.salir()" />
+        </div>
+    </div>  
+
 
     <!-- PÁGINA DE CONTENIDOS: #contenidosPage -->
     <div data-role="page" id="contenidosPage" data-theme="a">
@@ -114,11 +132,11 @@
 
         <div data-role="navbar">
                 <ul>
-                  <li><a href="#" data-icon="video" class="ui-btn ui-shadow ui-corner-all" onclick="loadVideosAlumno();">Videos</a></li>
-                  <li><a href="#" data-icon="camera" class="ui-btn ui-shadow ui-corner-all" onclick="loadImagenesAlumno(); ">Imágenes</a></li>
+                  <li><a href="#" data-icon="video" class="ui-btn ui-shadow ui-corner-all" onclick="familiaApp.loadVideosAlumno();">Videos</a></li>
+                  <li><a href="#" data-icon="camera" class="ui-btn ui-shadow ui-corner-all" onclick="familiaApp.loadImagenesAlumno(); ">Imágenes</a></li>
                 </ul>
                 <ul>  
-                  <li><a href="#" data-icon="comment" class="ui-btn ui-shadow ui-corner-all" onclick="loadComunicadosAlumno()" >Comunicados</a></li>
+                  <li><a href="#" data-icon="comment" class="ui-btn ui-shadow ui-corner-all" onclick="familiaApp.loadComunicadosAlumno()" >Comunicados</a></li>
                   <li><a href="#principal" data-icon="home" data-direction="reverse" class="ui-btn ui-shadow ui-corner-all">Inicio</a></li>
                 </ul>
         </div>                  
@@ -174,11 +192,11 @@
             <div id="asistenciarioSelectPanel">    
                 <label for="asistenciarioDate">Seleccione la fecha</label>
                 <input type="date" name="name" id="asistenciarioDate" value="" data-mini="true">
-                <!-- <button onclick="fichaDiariaAlumno();" class="ui-btn ui-shadow ui-corner-all">Ver ficha</button> -->
+                <!-- <button onclick="familiaApp.fichaDiariaAlumno();" class="ui-btn ui-shadow ui-corner-all">Ver ficha</button> -->
             </div>
             <div data-role="navbar" data-iconpos="right">
                 <ul>  
-                  <li><a href="#" data-icon="calendar" class="ui-btn ui-shadow ui-corner-all" onclick="fichaDiariaAlumno()">Ver ficha</a></li>
+                  <li><a href="#" data-icon="calendar" class="ui-btn ui-shadow ui-corner-all" onclick="familiaApp.fichaDiariaAlumno()">Ver ficha</a></li>
                 </ul>
                 <ul>
                   <li><a href="#principal" data-icon="home" data-direction="reverse" class="ui-btn ui-shadow ui-corner-all">Inicio</a></li>
@@ -192,9 +210,9 @@
 
     <div data-role="page" id="encuestasPage" data-theme="a">
 
-            <div data-role="header" class="ui-content" >
-                <img src="img/logo.png" style="margin:0px auto;display:block"/>
-            </div><!-- /header -->
+        <div data-role="header" class="ui-content" >
+            <img src="img/logo.png" style="margin:0px auto;display:block"/>
+        </div><!-- /header -->
      
         <div role="main" class="ui-content">
             <h3>Encuestas sin contestar</h3>
@@ -219,20 +237,19 @@
         <div role="main" id="encuestaPanel" class="ui-content">
       
         </div>
-    <div data-role="navbar" id="navBarButtons1">
-        <ul>
-          <li><a href="#" data-icon="carat-r" class="ui-btn ui-shadow ui-corner-all" onclick="loadItem();">Comenzar</a></li>
-          <li><a href="#principal" data-icon="back" class="ui-btn ui-shadow ui-corner-all" onclick="limpiarEncuesta();">Cancelar</a></li>
-        </ul>
-    </div>   
-    <div data-role="navbar" style="display: none;" id="navBarButtons2">
-        <ul>
-            <li><a href="#principal" data-icon="back" class="ui-btn ui-shadow ui-corner-all" onclick="limpiarEncuesta();">Volver</a></li>
-        </ul>
-    </div>      
-    <div data-role="content" id="encuestaItemPanel" class="ui-content">
-    </div>
- 
+        <div data-role="navbar" id="navBarButtons1">
+            <ul>
+              <li><a href="#" data-icon="carat-r" class="ui-btn ui-shadow ui-corner-all" onclick="familiaApp.loadItem();">Comenzar</a></li>
+              <li><a href="#principal" data-icon="back" class="ui-btn ui-shadow ui-corner-all" onclick="familiaApp.limpiarEncuesta();">Cancelar</a></li>
+            </ul>
+        </div>   
+        <div data-role="navbar" style="display: none;" id="navBarButtons2">
+            <ul>
+                <li><a href="#principal" data-icon="back" class="ui-btn ui-shadow ui-corner-all" onclick="familiaApp.limpiarEncuesta();">Volver</a></li>
+            </ul>
+        </div>      
+        <div data-role="content" id="encuestaItemPanel" class="ui-content">
+        </div>
     </div>
 
     <div data-role="page" id="paginaError" >
@@ -246,9 +263,9 @@
             <p>No se ha podido establecer la conexión con el servidor. Vuelva a intentarlo más tarde.</p>
             <p>Disculpe las molestias.</p>
             <hr /> 
-            <input type="button" value="Salir" onclick="salir()" />
+            <input type="button" value="Salir" onclick="familiaApp.salir()" />
         </div>
-    </div>    
+    </div>        
 
 </body>
 </html>
