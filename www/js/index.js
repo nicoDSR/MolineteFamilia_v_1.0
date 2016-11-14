@@ -117,6 +117,8 @@ var checkAndLoadFile = function(ruta, clave){
 var downloadFileAndLoad = function(nombreArchivo, clave){
     //Si no existe el archivo, primero lo descargo del servidor.
     console.log("No existe el archivo");
+    $("#esperarModalContenidosMensaje").html("Descargando...");
+    $("#esperarModalContenidos").css("display", "block");    
     var fileTransfer = new FileTransfer();
     var uri = encodeURI(server+"/"+nombreArchivo);
     var fileURL = store + nombreArchivo;
@@ -129,7 +131,7 @@ var downloadFileAndLoad = function(nombreArchivo, clave){
                 v += "<video width=\"100%\" height=\"auto\" autoplay controls='controls'>";
             }  
             else if (deviceType == "Android"){
-                var ext = ruta.split('.').pop();
+                var ext = nombreArchivo.split('.').pop();
                 if (ext == 'MOV'){
                     v += "<video width=\"100%\" class='video-js' height=\"auto\" autoplay controls preload='auto' data-setup=\"{}\">";
                 }
@@ -142,6 +144,7 @@ var downloadFileAndLoad = function(nombreArchivo, clave){
             v += "</video><p>Título: "+videoData[clave].nombre+"</p>";
             v += "<p>Descripción: "+videoData[clave].descripcion+"</p>";
             $("#verVideo").html(v);
+            $("#esperarModalContenidos").css("display", "none");
             $("video").focus();
 
         },
