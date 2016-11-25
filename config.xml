@@ -1,10 +1,10 @@
 <?xml version='1.0' encoding='utf-8'?>
 <widget id="com.colegiodelosmolinos.molineteDocente" version="1.0.0" xmlns="http://www.w3.org/ns/widgets" xmlns:gap="http://phonegap.com/ns/1.0">
-    <name>Familia Molinete</name>
+    <name>Molinete Familia</name>
     <description>
         Aplicación del proyecto Molinete, para uso de las familias.
     </description>
-    <author email="nico.uy@gmail.com" href="http://colegiodelosmolinos.edu.uy">
+    <author email="colegiodelosmolinos@gmail.com" href="http://colegiodelosmolinos.edu.uy">
         Colegio De los Molinos
     </author>
     <content src="index.html" />

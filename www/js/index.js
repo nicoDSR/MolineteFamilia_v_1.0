@@ -1,83 +1,24 @@
 
 var app = {
-    // Application Constructor
     initialize: function() {
         this.bindEvents();
     },
-    // Bind Event Listeners
-    //
-    // Bind any events that are required on startup. Common events are:
-    // 'load', 'deviceready', 'offline', and 'online'.
     bindEvents: function() {
         document.addEventListener('deviceready', this.onDeviceReady, false);
     },
-    // deviceready Event Handler
-    //
-    // The scope of 'this' is the event. In order to call the 'receivedEvent'
-    // function, we must explicitly call 'app.receivedEvent(...);'
     onDeviceReady: function() { 
         app.receivedEvent('deviceready');
-        app.setupPush();
+        
     },
     // Update DOM on a Received Event
     receivedEvent: function(id) { 
            familiaApp.inicializar(); 
-    },
-    setupPush: function() {
-        console.log('calling push init');
-        var push = PushNotification.init({
-            "android": {
-                "senderID": "XXXXXXXX"
-            },
-            "browser": {},
-            "ios": {
-                "sound": true,
-                "vibration": true,
-                "badge": true
-            },
-            "windows": {}
-        });
-        console.log('after init');
-
-        push.on('registration', function(data) {
-            console.log('registration event: ' + data.registrationId);
-
-            var oldRegId = localStorage.getItem('registrationId');
-            if (oldRegId !== data.registrationId) {
-                // Save new registration ID
-                localStorage.setItem('registrationId', data.registrationId);
-                // Post registrationId to your app server as the value has changed
-            }
-
-            var parentElement = document.getElementById('registration');
-            var listeningElement = parentElement.querySelector('.waiting');
-            var receivedElement = parentElement.querySelector('.received');
-
-            listeningElement.setAttribute('style', 'display:none;');
-            receivedElement.setAttribute('style', 'display:block;');
-        });
-
-        push.on('error', function(e) {
-            console.log("push error = " + e.message);
-        });
-
-        push.on('notification', function(data) {
-            console.log('+++++++++++++++++++++++++');
-            console.log('notification event');
-            console.log(data);
-            navigator.notification.alert(
-                data.message,         // message
-                null,                 // callback
-                data.title,           // title
-                'Ok'                  // buttonName
-            );
-       });
-    }      
+    }    
 }; 
 
 var familiaApp = ( function(){
 
-var server = ""; //http://niconoip.hopto.org:8081
+var server = "";
 var alumnoId = "";
 var store;
 var deviceType;
@@ -85,14 +26,12 @@ var familiar;
 var encuesta;
 var itemActualEncuesta = 0;
 var respuestaEncuesta;
-var cargueVideos = false;
-var cargueImagenes = false;
 var videoData = {};
 var comunicados = [];
 
-
+//Si ya existe el archivo lo muestra para reproducir.
 var checkAndLoadFile = function(ruta, clave){
-    //Si ya existe el archivo lo muestra para reproducir.
+
     var v = "";
     if (deviceType == "iPhone"){
         v += "<video width=\"100%\" height=\"auto\" autoplay controls='controls'>";
@@ -114,14 +53,16 @@ var checkAndLoadFile = function(ruta, clave){
     $("video").focus();
 };
 
+//Si no existe el archivo, primero lo descargo del servidor.
 var downloadFileAndLoad = function(nombreArchivo, clave){
-    //Si no existe el archivo, primero lo descargo del servidor.
-    console.log("No existe el archivo");
     $("#esperarModalContenidosMensaje").html("Descargando...");
-    $("#esperarModalContenidos").css("display", "block");    
+    $("#esperarModalContenidos").css("display", "block");
+    //Pido plugin FileTransfer.    
     var fileTransfer = new FileTransfer();
     var uri = encodeURI(server+"/"+nombreArchivo);
     var fileURL = store + nombreArchivo;
+    //Descargaremos el archivo. En caso de ser extensión .mov y el dispositivo tenga
+    //SO Android, lo reproduciremos con video.js. En el resto de los casos usamos html5.
     fileTransfer.download(
         uri,
         fileURL,
@@ -149,9 +90,7 @@ var downloadFileAndLoad = function(nombreArchivo, clave){
 
         },
         function(error) {
-            console.log("download error source " + error.source);
-            console.log("download error target " + error.target);
-            console.log("upload error code" + error.code);
+            $("#esperarModalContenidosMensaje").html("Error en la descarga");
         },
         false,
         {
@@ -163,12 +102,11 @@ var downloadFileAndLoad = function(nombreArchivo, clave){
     
 };
 
+//Carga un item de muchas posibles elecciones en la encuesta.
 var loadItemMultiple = function(it){
-    console.log(it);
     $("#encuestaItemPanel").html("");
     var htmlInterior = "<fieldset id='fieldsetItemMultiple' data-role='controlgroup'>";
     htmlInterior += "<legend>"+it.titulo+"</legend>";
-    console.log(it.items);
     $.each(it.items, function( key, val ) {
        htmlInterior += "<label for='"+key+"'>"+val.etiqueta+"</label>"; 
        htmlInterior += "<input class='itcheckbox' type='checkbox' id='"+key+"' value='"+val.valor+"'/>";
@@ -177,25 +115,23 @@ var loadItemMultiple = function(it){
     htmlInterior += '<a id="btItemMultiple" data-role="button mini" onclick="familiaApp.checkItemMultiple()">Siguiente</a>';
     $("#encuestaItemPanel").append(htmlInterior);
     $("#btItemMultiple").button();
-
     $('.itcheckbox').checkboxradio();
 };
 
+//Carga un item de una sola respuesta en la encuesta.
 var loadItemCheckbox = function(it){
-    console.log(it);
     $("#encuestaItemPanel").html("");
     var htmlInterior = "<fieldset id='fieldsetItemMultiple' data-role='controlgroup'>";
     htmlInterior += "<legend>"+it.titulo+"</legend>";
-    console.log(it.items);
     $.each(it.items, function( key, val ) {
-       if (key == 0){
+       if (key === 0){
          htmlInterior += "<input type='radio' name='radiochoice' id='"+key+"' value='"+val.valor+"' checked='checked'/>";
        } 
        else{
         htmlInterior += "<input type='radio' name='radiochoice' id='"+key+"' value='"+val.valor+"'/>";
        }
        htmlInterior += "<label for='"+key+"'>"+val.etiqueta+"</label>"; 
-    });//'<fieldset data-role="controlgroup"><legend>Checkbox 1</legend><input type="radio" name="radio" id="rid0" value="opck1" checked="checked"/><label for="rid0">Opción check 1</label><input type="radio" name="radio1" id="rid1" value="opck2"/><label for="rid1">Opción check 2</label></fieldset>'
+    });
     htmlInterior +="</fieldset><hr />";
     htmlInterior += '<a id="btItemMultiple" data-role="button mini" onclick="familiaApp.checkItemCheckbox()">Siguiente</a>';
     $("#encuestaItemPanel").append(htmlInterior);
@@ -203,6 +139,7 @@ var loadItemCheckbox = function(it){
     $('[type="radio"]').checkboxradio();
 };
 
+//Carga un item de respuesta libre en la encuesta.
 var loadItemTextual = function(it){
     $("#encuestaItemPanel").html("");
     var htmlInterior = "<label for='itemTextual'>"+it.titulo+"</label>";
@@ -211,76 +148,83 @@ var loadItemTextual = function(it){
     $("#encuestaItemPanel").append(htmlInterior);
     $("#btItemTextual").button();
     $('#itemTextual').textinput();
-}
+};
 
+//Convierte un string con fecha UTC en un string del formato dd/mm/yyyy, 
+//teniendo en cuenta la zona horaria
 var convertirFecha = function (fechaDelServidor){
-    //Convierte un string con fecha UTC en un string del formato dd/mm/yyyy, 
-    //teniendo en cuenta la zona horaria
-
     var d = new Date(fechaDelServidor);
     var anio = d.getFullYear();
     var mes = d.getMonth() + 1;  //los meses comienzan en cero
     var dia = d.getDate();
-
     if(dia < 10){
         dia = "0" + dia;
     }
     if(mes < 10){
         mes = "0" + mes;
     }
-
     return dia + "/" + mes + "/" + anio;
-}
+};
 
 
 //API FAMILIA MOLINETE
 return {
+
+//Función que inicializa las variables principales de la aplicación.    
 inicializar :function(){
-    deviceType = (navigator.userAgent.match(/iPad/i))  == "iPad" ? "iPad" : (navigator.userAgent.match(/iPhone/i))  == "iPhone" ? "iPhone" : (navigator.userAgent.match(/Android/i)) == "Android" ? "Android" : (navigator.userAgent.match(/BlackBerry/i)) ==  "BlackBerry" ? "BlackBerry" : "null";
-    if (deviceType == "iPhone"){
-        store = cordova.file.documentsDirectory;
-    }
-    else if (deviceType == "Android"){
-        store = cordova.file.externalDataDirectory;
-    }
-    server = host;
-    $.get( server+"/checkAuth/familiares/"+device.uuid, function( data ) {
-        console.log(data);
-        if (data == 'noautorizado'){
-            
-            $(':mobile-pagecontainer').pagecontainer('change', '#login', {
-                transition: 'flip',
-                changeHash: false,
-                reverse: true,
-                showLoadMsg: true
+    //Ruta donde se encuentra el archivo de configuración.
+    $.getJSON("js/conf.json", function(result){
+        $.getJSON(result.host, function(result1){
+            //Pido el servidor.
+            server = result1.host;
+            //Determino el sistema.
+            deviceType = (navigator.userAgent.match(/iPad/i))  == "iPad" ? "iPad" : (navigator.userAgent.match(/iPhone/i))  == "iPhone" ? "iPhone" : (navigator.userAgent.match(/Android/i)) == "Android" ? "Android" : (navigator.userAgent.match(/BlackBerry/i)) ==  "BlackBerry" ? "BlackBerry" : "null";
+            //Dependiendo del sistema setea storage.
+            if (deviceType == "iPhone"){
+                store = cordova.file.documentsDirectory;
+            }
+            else if (deviceType == "Android"){
+                store = cordova.file.externalDataDirectory;
+            }
+            //Chequeo que el móvil sea autorizado.
+            $.get( server+"/checkAuth/familiares/"+device.uuid, function( data ) {
+                if (data == 'noautorizado'){ 
+                    $(':mobile-pagecontainer').pagecontainer('change', '#login', {
+                        transition: 'flip',
+                        changeHash: false,
+                        reverse: true,
+                        showLoadMsg: true
+                    });
+                }
+                else{
+                    //Es autorizado, pido el familiar asociado.
+                    $.getJSON( server+"/getFamiliar/"+device.uuid, function( data ) {
+                        familiar = data;
+                        familiaApp.loadAlumnosDeFamiliar(); 
+                    });   
+                }
+            }).fail(function(jqXHR, textStatus, errorThrown) {
+                familiaApp.irAPaginaError();
             });
-        }
-        else{
-            $.getJSON( server+"/getFamiliar/"+device.uuid, function( data ) {
-                familiar = data;
-                familiaApp.loadAlumnosDeFamiliar(); 
-            });
-            
-        }
-    }).fail(function(jqXHR, textStatus, errorThrown) {
-        familiaApp.irAPaginaError();
+        });
     });
 }, 
+//Función donde el familiar autentica sus datos.
 ingresar :function(){
     var error = false;
     var ci = $("#cifamiliar").val();
     var codigo = $("#code").val();
-    if (ci == '' || ci == null){
+    if (ci === '' || ci === null){
         $("#cifamiliarerror").val("Debe ingresar este campo.");
         error = true;
     }
-    if (codigo == '' || codigo == null){
+    if (codigo === '' || codigo === null){
         $("#codeerror").val("Debe ingresar este campo.");
         error = true;
     }
     if (!error){ 
+        //Chequea correctitud de datos en servidor.
          $.get( server+"/ingresar/familiares/"+ci+"/"+device.uuid+"/"+codigo, function( data ) {
-            console.log(data );
             if (data == 'ok'){
                $(':mobile-pagecontainer').pagecontainer('change', '#start', {
                 transition: 'flip',
@@ -308,6 +252,7 @@ ingresar :function(){
         });
      } 
 },
+//Carga de alumnos asociados al familiar.
 loadAlumnos: function(){
     $.getJSON( server+"/verColeccion/alumnos", function( data ) {
         var alumnosListHTML = "";
@@ -322,10 +267,9 @@ loadAlumnos: function(){
         familiaApp.irAPaginaError();
     });
 },
+//Carga de alumnos asociados al familiar.
 loadAlumnosDeFamiliar: function(){
-    console.log(familiar);
     $.getJSON( server+"/alumnosDeFamiliar/"+familiar._id, function( data ) {
-        console.log(data);
         var alumnosListHTML = "";
         $.each( data, function( key, val ) {
             alumnosListHTML += "<option  value='"+val._id+"'>"+val.nombres+" "+val.apellidos+"</option>";
@@ -339,22 +283,22 @@ loadAlumnosDeFamiliar: function(){
     });
 },
 
-//////////////VIDEOS
+//Carga los videos asociados a un alumno.
 loadVideosAlumno: function(){
     $('#imagenPanel').css("display", "none");
     $('#comunicadosPanel').css("display", "none");
     $("#ulVideo").html("");
     $('#videosPanel').css("display", "block");
+    //Pide todos los videos asociados.
     $.getJSON( server+"/contenidosDeAlumno/Video/"+alumnoId, function( data ) {
         videoData = data;
         var htmlInterior = "";
         $("#videosTexto").empty();
-
-        if(data.length == 0){
+        if(data.length === 0){
             htmlInterior += "<p>No hay videos para mostrar</p>";
             $("#videosTexto").append(htmlInterior);
         } else {
-
+            //Hay uno o más videos.
             $.each( data, function( key, val ) {
                 var fechaString = convertirFecha(val.fecha);
                 htmlInterior = "<li class='videolink ui-btn ui-shadow ui-corner-all' data-icon='bullets' key='"+key+"' file='"+val.nombreArchivo+"''>";
@@ -374,8 +318,10 @@ loadVideosAlumno: function(){
     });
 },
 
+//Chequea si un archivo existe en el celular o no.
+//Determina que hacer en cada caso (cargarlo o descargarlo).
 checkFileInMobile : function(clave){
-    //Chequea si un archivo existe en el celular o no.
+
     var fileName = videoData[clave].nombreArchivo;
     window.resolveLocalFileSystemURL(store + fileName,                                
             function(fileEntry){ 
@@ -387,7 +333,7 @@ checkFileInMobile : function(clave){
 
 },
 
-///////IMÁGENES
+//Carga las imágenes asociados a un alumno.
 loadImagenesAlumno: function(){
     console.log(alumnoId);
     $('#videosPanel').css("display", "none");
@@ -395,12 +341,12 @@ loadImagenesAlumno: function(){
     $('.imagenGaleria').html("");
     $('#imagenPanel').css("display", "block");
     $.getJSON( server+"/contenidosDeAlumno/Imagen/"+alumnoId, function( data ) {
-        console.log(data.length);
         var htmlInterior = "";
-        if(data.length == 0){
+        if(data.length === 0){
             htmlInterior += "<p>No hay imágenes para mostrar</p>";
             $('.imagenGaleria').append(htmlInterior);
         } else {
+            //Existe una o más imágenes asociadas al alumno.
             $.each( data, function( key, val ) {
                 htmlInterior = "<div class= 'responsive'>";
                     htmlInterior += "<div class='img'>";
@@ -413,7 +359,6 @@ loadImagenesAlumno: function(){
                 $('.imagenGaleria').append(htmlInterior);   
             });
             $(".imagenGaleriaLink").click(function(){
-                console.log("Empezmos bien");
                 $("#imagenPopupModal").css("display", "block");
                 $("#imagenPopup").attr("src", $(this).children("img").attr("src"));
                 $("#caption").html = "Probando";
@@ -426,44 +371,46 @@ loadImagenesAlumno: function(){
         familiaApp.irAPaginaError();
     });
 },
+
+//Limpia todos los contenedores html
 empezar: function(){
-       console.log("EMPEZAR");  
-    cargueVideos = false;
-    cargueImagenes = false;
-    
     $("#verVideo").empty();
     $("#imagenGaleria").empty();
     $("#comunicadosPagina").empty();
     $('#imagenPanel').css("display", "none");
     $('#comunicadosPanel').css("display", "none");  
     $('#videosPanel').css("display", "none"); 
-   
     alumnoId = $("#alumnosList").val();
     $("#alumnoName").html($("#alumnosList").children('option:selected').html());
     $( "#fichaDiariaPanel" ).html("");
 },
-///////COMUNICADOS
+
+//Carga los comunicados asociados a un alumno.
 loadComunicadosAlumno: function(){
     $('#videosPanel').css("display", "none");
     $('#imagenPanel').css("display", "none");    
     $('#comunicadosPanel').css("display", "block");
+    //Pide comunicados al servidor.
     $.getJSON( server+"/contenidosDeAlumno/Comunicado/"+alumnoId, function( data ) {
-        var htmlInterior = "";
-        if(data.length == 0){
+        if(data.length === 0){
             var htmlInterior = "";
             htmlInterior += "<p>No hay comunicados para mostrar</p>";
             $('#comunicadosPagina').empty(htmlInterior);
             $('#comunicadosPagina').append(htmlInterior);
         
         } else {
+            //Existe uno o más comunicados.
             comunicados = data;
-            familiaApp.mostrarMasComunicados(false); //Mostrar los 3 comunicados mas recientes.
+            //Mostrar los 3 comunicados mas recientes.
+            familiaApp.mostrarMasComunicados(false); 
         }
 
     }).fail(function(jqXHR, textStatus, errorThrown) {
         familiaApp.irAPaginaError();
     });
 },
+
+//Muestra comunicados anteriores.
 mostrarMasComunicados: function(mostrarTodos) {
     var htmlInterior = "";
     var cantidad;
@@ -487,115 +434,122 @@ mostrarMasComunicados: function(mostrarTodos) {
             i = cantidad; // Para que termine
         }
     }
-
-    if(total > 3) { // Si hay 3 comunicados o menos, no es necesario el boton para mostrar mas.
+    // Si hay 3 comunicados o menos, no es necesario el boton para mostrar mas.
+    if(total > 3) { 
         htmlInterior += '<hr /><a id="btMostrarMas" class="ui-btn ui-shadow ui-corner-all" data-role="button mini" onclick="familiaApp.mostrarMasComunicados('
             + !mostrarTodos + ')">' + mensajeBoton + '</a>';
     }
     $('#comunicadosPagina').empty();
     $('#comunicadosPagina').append(htmlInterior);  
 },
-//////ASISTENCIARIO
+
+//Pide la ficha diaria de un alumno para una fecha determinada.
 fichaDiariaAlumno: function(){
     $( "#fichaDiariaPanel" ).html("");
-    $.getJSON( server+"/getAsistenciarioAlumno/"+alumnoId+"/"+$("#asistenciarioDate").val(), function( data ) {
-        var htmlFichaDiaria = "";
-        if(data) {
-             htmlFichaDiaria += "<p><b>"+data.alumno.nombres+" "+data.alumno.apellidos+"</b></p>";
-             $( "#fichaDiariaPanel" ).append(htmlFichaDiaria);
-             if (data.entrada != null){
-                try{
-                    var d = new Date(data.entrada);
-                    var minutes = d.getMinutes();
-                    if (minutes < 10){
-                        minutes = "0"+minutes;
+    if ($("#asistenciarioDate").val() === ""){
+        var htmlFichaDiaria = "<p style='color: red'>Debe seleccionar una fecha.</p>";
+        $( "#fichaDiariaPanel" ).append(htmlFichaDiaria);
+    }
+    else{
+        //En caso de completar correctamente el formulario, pide la ficha al servidor.
+        $.getJSON( server+"/getAsistenciarioAlumno/"+alumnoId+"/"+$("#asistenciarioDate").val(), function( data ) {
+            var htmlFichaDiaria = "";
+            if(data) {
+                 htmlFichaDiaria += "<p><b>"+data.alumno.nombres+" "+data.alumno.apellidos+"</b></p>";
+                 $( "#fichaDiariaPanel" ).append(htmlFichaDiaria);
+                 //Trabaja primero con el horario de entrada y de salida.
+                 if (data.entrada !== null){
+                    try{
+                        var d = new Date(data.entrada);
+                        var minutes = d.getMinutes();
+                        if (minutes < 10){
+                            minutes = "0"+minutes; 
+                        }
+                        htmlFichaDiaria = "<table data-role=\"table\" id=\"entradaTabla\"><tr><td style=\"color: #48a4ff\">Entrada </td>";
+                        htmlFichaDiaria += "<td>"+d.getHours()+":"+minutes+"</td></tr></table>";
+                        $( "#fichaDiariaPanel" ).append(htmlFichaDiaria);
                     }
-                    htmlFichaDiaria = "<table data-role=\"table\" id=\"entradaTabla\"><tr><td style=\"color: #48a4ff\">Entrada </td>";
-                    htmlFichaDiaria += "<td>"+d.getHours()+":"+minutes+"</td></tr></table>";
-                    $( "#fichaDiariaPanel" ).append(htmlFichaDiaria);
-                }
-                catch(e){
-                    console.log("Fallo en la fecha.");
-                }
-             } 
-             if (data.salida != null){
-                try{
-                    var d = new Date(data.salida);
-                    var minutes = d.getMinutes();
-                    if (minutes < 10){
-                        minutes = "0"+minutes;
+                    catch(e){
+                        console.log("Fallo en la fecha.");
                     }
-                    htmlFichaDiaria = "<table data-role=\"table\" id=\"salidaTabla\"><tr><td style=\"color: #48a4ff\">Salida </td>";
-                    htmlFichaDiaria += "<td>"+d.getHours()+":"+minutes+"</td></tr></table>";
+                 } 
+                 if (data.salida !== null){
+                    try{
+                        var d = new Date(data.salida);
+                        var minutes = d.getMinutes();
+                        if (minutes < 10){
+                            minutes = "0"+minutes;
+                        }
+                        htmlFichaDiaria = "<table data-role=\"table\" id=\"salidaTabla\"><tr><td style=\"color: #48a4ff\">Salida </td>";
+                        htmlFichaDiaria += "<td>"+d.getHours()+":"+minutes+"</td></tr></table>";
+                        $( "#fichaDiariaPanel" ).append(htmlFichaDiaria);
+                    }
+                    catch(e){
+                        console.log("Fallo en la fecha."); 
+                    }            
+                 }
+                 //Revisa cada uno de los sucesos, y en caso que existan los procesa adecuadamente.
+                 if (data.panhales !== null){
+                    var pan = JSON.parse(data.panhales);
+                    htmlFichaDiaria = "<hr /><table data-role=\"table\" id=\"panhalesTabla\"><tr><td style=\"color: #48a4ff\">Pañales</td></tr>";
+                    htmlFichaDiaria += "<tr><td>Cant.Cambios</td><td>Orinó</td><td>Evacuó</td></tr>";
+                    htmlFichaDiaria += "<tbody><tr><td>"+pan.veces+"</td><td>"+pan.orino+"</td><td>"+pan.evacuo+"</td></tr></tbody></table>";
                     $( "#fichaDiariaPanel" ).append(htmlFichaDiaria);
-                }
-                catch(e){
-                    console.log("Fallo en la fecha."); 
-                }            
-             }
-             if (data.panhales != null){
-                console.log("1");
-                var pan = JSON.parse(data.panhales);
-                htmlFichaDiaria = "<hr /><table data-role=\"table\" id=\"panhalesTabla\"><tr><td style=\"color: #48a4ff\">Pañales</td></tr>";
-                htmlFichaDiaria += "<tr><td>Cant.Cambios</td><td>Orinó</td><td>Evacuó</td></tr>";
-                htmlFichaDiaria += "<tbody><tr><td>"+pan.veces+"</td><td>"+pan.orino+"</td><td>"+pan.evacuo+"</td></tr></tbody></table>";
+                 }
+                if (data.mamaderas !== null){
+                    var mam = JSON.parse(data.mamaderas);
+                    htmlFichaDiaria = "<hr /><table data-role=\"table\" id=\"mamaderasTabla\"><tr><td style=\"color: #48a4ff\">Mamaderas</td></tr>";
+                    htmlFichaDiaria += "<tr><td>Mililitros</td><td>Tomas diarias</td></tr>";
+                    htmlFichaDiaria += "<tbody><tr><td>"+mam.mililitros+"</td><td>"+mam.tomas+"</td></tr></tbody></table>";
+                    $( "#fichaDiariaPanel" ).append(htmlFichaDiaria);
+                 }
+                 if (data.almuerzo !== null){
+                    var alm = JSON.parse(data.almuerzo);
+                    htmlFichaDiaria = "<hr /><table data-role=\"table\" id=\"almuerzoTabla\"><tr><td style=\"color: #48a4ff\">Almuerzo</td>";
+                    htmlFichaDiaria += "<td>"+alm.comportamiento+"</td></tr></table>";
+                    $( "#fichaDiariaPanel" ).append(htmlFichaDiaria);
+                 }     
+                 if (data.postre !== null){
+                    var alm = JSON.parse(data.postre);
+                    htmlFichaDiaria = "<table data-role=\"table\" id=\"postreTabla\"><tr><td style=\"color: #48a4ff\">Postre</td>";
+                    htmlFichaDiaria += "<td>"+alm.comportamiento+"</td></tr></table>";
+                    $( "#fichaDiariaPanel" ).append(htmlFichaDiaria);
+                 }  
+                 if (data.merienda !== null){
+                    var alm = JSON.parse(data.merienda);
+                    htmlFichaDiaria = "<table data-role=\"table\" id=\"meriendaTabla\"><tr><td style=\"color: #48a4ff\">Merienda</td>";
+                    htmlFichaDiaria += "<td>"+alm.comportamiento+"</td></tr></table>";
+                    $( "#fichaDiariaPanel" ).append(htmlFichaDiaria);
+                 }   
+                 if (data.siesta !== null){
+                    var sis = JSON.parse(data.siesta);
+                    htmlFichaDiaria = "<table data-role=\"table\" id=\"siestaTabla\"><tr><td style=\"color: #48a4ff\">Siesta</td>";
+                    htmlFichaDiaria += "<td>"+sis.minutos+" minutos</td></tr></table>";
+                    $( "#fichaDiariaPanel" ).append(htmlFichaDiaria);
+                 }            
+                 if (data.nota !== null){
+                    htmlFichaDiaria = "<hr /><table data-role=\"table\" id=\"siestaTabla\"><tr><td style=\"color: #48a4ff\">Nota</td></tr>";
+                    htmlFichaDiaria += "<tr><td><i>"+data.nota+"</i></td></tr></table>";
+                    $( "#fichaDiariaPanel" ).append(htmlFichaDiaria);
+                 }
+            } else {
+                htmlFichaDiaria = "<p>No existen registros para ese día.</p>";
                 $( "#fichaDiariaPanel" ).append(htmlFichaDiaria);
-             }
-            if (data.mamaderas != null){
-                var mam = JSON.parse(data.mamaderas);
-                console.log("2");
-                htmlFichaDiaria = "<hr /><table data-role=\"table\" id=\"mamaderasTabla\"><tr><td style=\"color: #48a4ff\">Mamaderas</td></tr>";
-                htmlFichaDiaria += "<tr><td>Mililitros</td><td>Tomas diarias</td></tr>";
-                htmlFichaDiaria += "<tbody><tr><td>"+mam.mililitros+"</td><td>"+mam.tomas+"</td></tr></tbody></table>";
-                $( "#fichaDiariaPanel" ).append(htmlFichaDiaria);
-             }
-             if (data.almuerzo != null){
-                var alm = JSON.parse(data.almuerzo);
-                htmlFichaDiaria = "<hr /><table data-role=\"table\" id=\"almuerzoTabla\"><tr><td style=\"color: #48a4ff\">Almuerzo</td>";
-                htmlFichaDiaria += "<td>"+alm.comportamiento+"</td></tr></table>";
-                $( "#fichaDiariaPanel" ).append(htmlFichaDiaria);
-             }     
-             if (data.postre != null){
-                var alm = JSON.parse(data.postre);
-                htmlFichaDiaria = "<table data-role=\"table\" id=\"postreTabla\"><tr><td style=\"color: #48a4ff\">Postre</td>";
-                htmlFichaDiaria += "<td>"+alm.comportamiento+"</td></tr></table>";
-                $( "#fichaDiariaPanel" ).append(htmlFichaDiaria);
-             }  
-             if (data.merienda != null){
-                var alm = JSON.parse(data.merienda);
-                htmlFichaDiaria = "<table data-role=\"table\" id=\"meriendaTabla\"><tr><td style=\"color: #48a4ff\">Merienda</td>";
-                htmlFichaDiaria += "<td>"+alm.comportamiento+"</td></tr></table>";
-                $( "#fichaDiariaPanel" ).append(htmlFichaDiaria);
-             }   
-             if (data.siesta != null){
-                var sis = JSON.parse(data.siesta);
-                htmlFichaDiaria = "<table data-role=\"table\" id=\"siestaTabla\"><tr><td style=\"color: #48a4ff\">Siesta</td>";
-                htmlFichaDiaria += "<td>"+sis.minutos+" minutos</td></tr></table>";
-                $( "#fichaDiariaPanel" ).append(htmlFichaDiaria);
-             }            
-             if (data.nota != null){
-                htmlFichaDiaria = "<hr /><table data-role=\"table\" id=\"siestaTabla\"><tr><td style=\"color: #48a4ff\">Nota</td></tr>";
-                htmlFichaDiaria += "<tr><td><i>"+data.nota+"</i></td></tr></table>";
-                $( "#fichaDiariaPanel" ).append(htmlFichaDiaria);
-             }
-        } else {
-            htmlFichaDiaria = "<p>No existen registros para ese día.</p>";
-            $( "#fichaDiariaPanel" ).append(htmlFichaDiaria);
-        }                                   
+            }                                   
 
-    }).fail(function(jqXHR, textStatus, errorThrown) {
-        familiaApp.irAPaginaError();
-    });
+        }).fail(function(jqXHR, textStatus, errorThrown) {
+            familiaApp.irAPaginaError();
+        });
+    }
 
 },
-//////ENCUESTAS
+
+//Carga las encuestas activas y asociadas al familiar.
 loadEncuestas: function(){
     $("#encuestasPanel").html("");
     $.getJSON( server+"/encuestasFamiliar/"+familiar._id, function( data ) {
-
         var htmlInterior = "";
         $("#encuestasPanel").empty();
-
         if(data.length > 0){
             $.each( data, function( key, val ) {
                 htmlInterior += "<a href='#' class='encuestaLink' id='"+val._id+"' >"+val.nombre+"</a><br />";
@@ -604,16 +558,15 @@ loadEncuestas: function(){
             htmlInterior = "<p>No hay nuevas encuestas.</p>";
         }
         $("#encuestasPanel").append(htmlInterior);
-        
+        //Carga comportamiento a la hora de elegir una encuesta.
         $(".encuestaLink").click(function(){
             $("#navBarButtons1").css("display", "block");
             $("#navBarButtons2").css("display", "none");
+            //Pide los datos de la encuesta seleccionada.
             $.getJSON( server+"/encuesta/"+$(this).attr("id"), function( data1 ) {
                 $("#encuestaPanel").append("<p>"+data1.descripcion+"</p>");
                 itemActualEncuesta = 0;
                 respuestaEncuesta = [];
-               // $("#encuestaPanel").append('<a id="btComenzarEncuesta" data-role="button" onclick="loadItem()">Comenzar</a>');
-                //$("#btComenzarEncuesta").button();
                 encuesta = data1;
                 $(':mobile-pagecontainer').pagecontainer('change', '#encuestaPage', {
                     transition: 'flip',
@@ -630,11 +583,14 @@ loadEncuestas: function(){
         familiaApp.irAPaginaError();
     });
 },
+
+//Toma los campos no procesados de la encuesta y despliega el primero seleccionando
+//a que función darle el control a través del tipo de la encuesta.
 loadItem: function(){
+    //Si aún quedan items por responder.
     if (itemActualEncuesta < encuesta.itemsencuesta.length){
         var itemEncuesta = encuesta.itemsencuesta[itemActualEncuesta];
         itemActualEncuesta = itemActualEncuesta + 1;
-        console.log(itemEncuesta.tipo);
         $("#encuestaPanel").html("<p>Pregunta número "+itemActualEncuesta+"</p>");
         switch(itemEncuesta.tipo) {
         case "multiple":
@@ -650,53 +606,56 @@ loadItem: function(){
             console.log("Item incorrecto");
         }
     }
+    //Se respondió cada uno de los items.
     else{
         $("#encuestaPanel").html("<p>Gracias por responder.</p>");
         $("#encuestaItemPanel").html("");
         $("#navBarButtons2").css("display", "block");
         $("#navBarButtons1").css("display", "none");
-        console.log(respuestaEncuesta);
         var url = server+"/subirRespuestaEncuesta/"+encuesta._id+"/"+familiar._id;
         var respuestaFinal = {"respuesta" : respuestaEncuesta};
-        console.log(respuestaFinal);
         $.post(url,respuestaFinal,'json');
     }
 },
+
+//Proceso un item con múltiple respuestas.
 checkItemMultiple : function(){
-   console.log($("#fieldsetItemMultiple :checked").size());
     var respuestas = [];
     $("#fieldsetItemMultiple :checked").each(function() {
         respuestas.push($(this).val());
     });
-    //$.each($("#fieldsetItemMultiple :checked"), function(key, val){
-        //respuestas.push(val);
-   // });
-    console.log(respuestas);
+    //Agrega la respuesta.
     respuestaEncuesta.push(respuestas);
     familiaApp.loadItem(); 
 },
+
+//Proceso un item con una única respuesta aceptada.
 checkItemCheckbox :function(){
-   console.log($("#fieldsetItemMultiple :checked").size());
     var respuestas = [];
     $("#fieldsetItemMultiple :checked").each(function() {
         respuestas.push($(this).val());
     });
-    console.log(respuestas);
+    //Agrega la respuesta.
     respuestaEncuesta.push(respuestas);
     familiaApp.loadItem();
 },
+
+//Procesa un item con respuesta libre.
 checkItemTextual : function(){
     var respuestas = []; 
     respuestas.push($("#itemTextual").val());
-    console.log(respuestas);
     respuestaEncuesta.push(respuestas);
     familiaApp.loadItem();
  
 },
+
+//Limpia los paneles de la encuesta.
 limpiarEncuesta: function(){
     $("#encuestaItemPanel").html("");
     $("#encuestaPanel").html("");
 },
+
+//Lleva a la página de error.
 irAPaginaError: function(){
     $(':mobile-pagecontainer').pagecontainer('change', '#paginaError', {
         transition: 'flip',
@@ -713,10 +672,3 @@ salir : function() {
 
 
 })();
-
-
-
-
-
-
-

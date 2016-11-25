@@ -5,7 +5,6 @@
         <meta charset="utf-8" />
         <meta name="format-detection" content="telephone=no" />
         <meta name="msapplication-tap-highlight" content="no" />
-        <!-- WARNING: for iOS 7, remove the width=device-width and height=device-height attributes. See https://issues.apache.org/jira/browse/CB-4323 -->
         <meta name="viewport" content="user-scalable=no, initial-scale=1, maximum-scale=1, minimum-scale=1, width=device-width, height=device-height, target-densitydpi=medium-dpi" />
         <link rel="stylesheet" href="css/themes/molinete-familia-theme.css" />
         <link rel="stylesheet" href="css/themes/jquery.mobile.icons.min.css" />
@@ -13,17 +12,11 @@
         <link rel="stylesheet" href="css/molinetecss.css" /> 
         <script type="text/javascript" src="cordova.js"></script>
         <script type="text/javascript" src="js/index.js"></script>
-
         <script src="js/jquery-1.11.3.min.js"></script>
         <script src="js/jquery.mobile-1.4.5.min.js"></script>      
-  
-
-  <link href="css/video-js.css" rel="stylesheet">
-
-  <!-- If you'd like to support IE8 -->
-    <script src="js/videojs-ie8.min.js"></script>
-    <script src="js/video.js"></script>
-    <script type="text/javascript" src="http://colegiodelosmolinos.edu.uy/conf.js"></script>
+        <link href="css/video-js.css" rel="stylesheet">
+        <script src="js/videojs-ie8.min.js"></script>
+        <script src="js/video.js"></script>
      
         <script type="text/javascript">
             app.initialize();
@@ -33,13 +26,10 @@
     </head>
     <body>
 <!-- ************* PAGINA INICIAL #elegirAlumnos ************* -->
-<!-- *****Esta página se utilizará hasta la iteración 2***** -->
     <div data-role="page" id="start">
-
         <div data-role="header" class="ui-content" >
             <img src="img/logo.png" style="margin:0px auto;display:block"/>
-        </div><!-- /header -->
-
+        </div>
         <div role="main" class="ui-content">
             <h3 id="mainTitle"> </h3>
             <div data-role="fieldcontain">
@@ -48,26 +38,19 @@
                 </select>
             </div>    
             <p><a href="#principal" class="ui-btn ui-shadow ui-corner-all ui-icon-carat-r ui-btn-icon-right" onclick="familiaApp.empezar();">¡Empezar!</a></p>
-
-        </div><!-- /content -->
-
-
+        </div>
     </div><!-- /page elegirAlumnos -->
 <!-- ************* PAGINA Principal #principal ************* -->
-<!-- *****Esta página se utilizará hasta la iteración 2***** -->
     <div data-role="page" id="principal" >
-
         <div data-role="header" class="ui-content" >
             <img src="img/logo.png" style="margin:0px auto;display:block"/>
-        </div><!-- /header -->
-
+        </div>
         <div role="main" class="ui-content">
             <h3 id="alumnoName"> </h3> 
             <div data-role="navbar">
                 <ul>
                   <li><a href="#contenidosPage" data-icon="shop" class="ui-btn ui-shadow ui-corner-all" >Contenidos</a></li>
                   <li><a href="#encuestasPage" data-icon="bullets" class="ui-btn ui-shadow ui-corner-all"  onclick="familiaApp.loadEncuestas();">Encuestas</a></li>
-                  
                 </ul>
                 <ul>
                 <li><a href="#asistenciarioPage" data-icon="calendar" class="ui-btn ui-shadow ui-corner-all" >Asistenciario</a></li>
@@ -75,17 +58,12 @@
                 </ul>            
             </div>
             <p></p>
-        </div><!-- /content -->
-
-    </div><!-- /page PRINCIPAL -->   
-    
-    
+        </div>
+    </div>
     <div data-role="page" id="login" >
-
         <div data-role="header" class="ui-content" >
             <img src="img/logo.png" style="margin:0px auto;display:block"/>
-        </div><!-- /header -->
-
+        </div>
         <div role="main" class="ui-content">
          <h3>Inicio de sesión</h3>
          <p>La aplicación Molinete es para uso exclusivo de las familias del Colegio De los Molinos.</p>
@@ -101,14 +79,11 @@
         <input type="button" value="Enviar" onclick="familiaApp.ingresar()" />
         </div>
     </div>    
-
-
     <div data-role="page" id="loginError" >
 
         <div data-role="header" class="ui-content" >
             <img src="img/logo.png" style="margin:0px auto;display:block"/>
-        </div><!-- /header -->
-
+        </div>
         <div role="main" class="ui-content">
             <h3>Inicio de sesión fallido</h3>
             <p>Las credenciales proporcionadas no son correctas.</p>
@@ -118,18 +93,13 @@
             <input type="button" value="Salir" onclick="familiaApp.salir()" />
         </div>
     </div>  
-
-
     <!-- PÁGINA DE CONTENIDOS: #contenidosPage -->
     <div data-role="page" id="contenidosPage" data-theme="a">
-
         <div data-role="header" class="ui-content" >
             <img src="img/logo.png" style="margin:0px auto;display:block"/>
         </div><!-- /header -->
-
         <div role="main" class="ui-content">
         <h3>Contenidos</h3>
-
         <div data-role="navbar">
                 <ul>
                   <li><a href="#" data-icon="video" class="ui-btn ui-shadow ui-corner-all" onclick="familiaApp.loadVideosAlumno();">Videos</a></li>
@@ -140,9 +110,6 @@
                   <li><a href="#principal" data-icon="home" data-direction="reverse" class="ui-btn ui-shadow ui-corner-all">Inicio</a></li>
                 </ul>
         </div>                  
-      
-      
-
         <div id="videosPanel" style="width: 100%; display: none;">
             <h3>Videos</h3>
             <div id="videosTexto">  
@@ -163,11 +130,9 @@
               <h4 style="text-align: center; color: white;" id="esperarModalContenidosMensaje"></h4>
             </div>
         </div>
-
         <div id="imagenPanel" style="width: 100%; display: none;">
             <h3>Imágenes</h3> 
-            <div class="imagenGaleria" >
-                
+            <div class="imagenGaleria" >   
             </div>
         </div>
         <div id="imagenPopupModal" class="modal">
@@ -178,27 +143,20 @@
         <div id="comunicadosPanel" style="width: 100%; display: none;">
         <h3>Comunicados</h3>
             <div id="comunicadosPagina" >
-                
             </div>
         </div>          
-
         <p></p>
-
-        </div><!-- /content -->
+        </div>
     </div><!-- /page contenidosPage -->
-
     <div data-role="page" id="asistenciarioPage" data-theme="a">
-
             <div data-role="header" class="ui-content" >
                 <img src="img/logo.png" style="margin:0px auto;display:block"/>
-            </div><!-- /header -->
-     
+            </div>
         <div role="main" class="ui-content">
             <h3>Asistenciario</h3>     
             <div id="asistenciarioSelectPanel">    
                 <label for="asistenciarioDate">Seleccione la fecha</label>
                 <input type="date" name="name" id="asistenciarioDate" value="" data-mini="true">
-                <!-- <button onclick="familiaApp.fichaDiariaAlumno();" class="ui-btn ui-shadow ui-corner-all">Ver ficha</button> -->
             </div>
             <div data-role="navbar" data-iconpos="right">
                 <ul>  
@@ -210,21 +168,17 @@
             </div> 
         </div>
         <div id="fichaDiariaPanel" class="conmargen">
-
         </div>
     </div>
-
+    <!-- PÁGINA DE ENCUESTAS: #encuestasPage -->
     <div data-role="page" id="encuestasPage" data-theme="a">
-
         <div data-role="header" class="ui-content" >
             <img src="img/logo.png" style="margin:0px auto;display:block"/>
-        </div><!-- /header -->
-     
+        </div>
         <div role="main" class="ui-content">
             <h3>Encuestas sin contestar</h3>
         </div> 
         <div id="encuestasPanel" class="ui-content">
-
         </div>
         <div role="main" class="ui-content">
             <div data-role="navbar" data-iconpos="right">
@@ -234,14 +188,11 @@
             </div>            
         </div>
     </div>
-
     <div data-role="page" id="encuestaPage" data-theme="a" >
         <div data-role="header" class="ui-content" >
             <img src="img/logo.png" style="margin:0px auto;display:block"/>
         </div><!-- /header -->
-
-        <div role="main" id="encuestaPanel" class="ui-content">
-      
+        <div role="main" id="encuestaPanel" class="ui-content">      
         </div>
         <div data-role="navbar" id="navBarButtons1">
             <ul>
@@ -257,13 +208,10 @@
         <div data-role="content" id="encuestaItemPanel" class="ui-content">
         </div>
     </div>
-
     <div data-role="page" id="paginaError" >
-
         <div data-role="header" class="ui-content" >
             <img src="img/logo.png" style="margin:0px auto;display:block"/>
-        </div><!-- /header -->
-
+        </div>
         <div role="main" class="ui-content">
             <h3>Error de conexión</h3>
             <p>No se ha podido establecer la conexión con el servidor. Vuelva a intentarlo más tarde.</p>
@@ -272,6 +220,5 @@
             <input type="button" value="Salir" onclick="familiaApp.salir()" />
         </div>
     </div>        
-
 </body>
 </html>
